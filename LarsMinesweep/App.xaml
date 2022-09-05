@@ -4,7 +4,7 @@
              xmlns:local="clr-namespace:LarsMinesweep"
              StartupUri="View/StartingWindow.xaml">
     <Application.Resources>
-        
+        <!-- This xaml is basically the Styling -->
         <Style x:Key="FocusVisual">
             <Setter Property="Control.Template">
                 <Setter.Value>
@@ -18,11 +18,8 @@
         <SolidColorBrush x:Key="Button.Static.Border" Color="Cyan"/>
         <SolidColorBrush x:Key="Button.MouseOver.Background" Color="Cyan"/>
         <SolidColorBrush x:Key="Button.MouseOver.Border" Color="Cyan"/>
-        <SolidColorBrush x:Key="Button.Pressed.Background" Color="Indigo"/>
+        <SolidColorBrush x:Key="Button.Pressed.Background" Color="Red"/>
         <SolidColorBrush x:Key="Button.Pressed.Border" Color="Red"/>
-        <!--<SolidColorBrush x:Key="Button.Disabled.Background" Color="Cyan"/>-->
-        <!--<SolidColorBrush x:Key="Button.Disabled.Border" Color="Cyan"/>-->
-        <!--<SolidColorBrush x:Key="Button.Disabled.Foreground" Color="Cyan"/>-->
         <Style x:Key="TileButton" TargetType="{x:Type Button}">
             <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
             <Setter Property="Background" Value="{StaticResource Button.Static.Background}"/>

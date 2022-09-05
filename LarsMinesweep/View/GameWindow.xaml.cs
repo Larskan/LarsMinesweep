@@ -30,6 +30,7 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
         private int _tileCounter;
         #endregion
 
+        #region The Gamewindow
         public GameWindow(int w, int h, int b)
         {
             InitializeComponent();
@@ -44,42 +45,44 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
             dt = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000) };
             dt.Tick += DtOnTick;
             dt.Start();
-            DataContext = this;
+            DataContext = this; //Databinding
             _tileCounter = -2; //It is -2 because length and height both start at 1, so to make counter start at 0: -2
             GenerateTiles();
 
-            //Load pictures of flag and mines into the memory of the application
+            //Load pictures of flag and mines into the memory of the application, so they can be called later
+            //Only absolute path seemed to work, tried with just Model\flag.png, but it kept breaking
             flagSource = new BitmapImage(new Uri(@"C:\Users\Lars\source\repos\LarsMinesweep\LarsMinesweep\Model\flag.png", UriKind.Relative));
             mineSource = new BitmapImage(new Uri(@"C:\Users\Lars\source\repos\LarsMinesweep\LarsMinesweep\Model\mine.png", UriKind.Relative));
             
-             
-
-
         }
 
         //This method is called every single tick
         private void DtOnTick(object? sender, EventArgs evenArgs)
         {
-            Time++; //Adds args counter that goes up
+            Time++; //Adds a counter that goes up, so you can see how long you take, great for potential hiscores
         }
+        #endregion
 
+        #region Generate Tiles and Generate Grid
         private void GenerateTiles()
         {
             //Empty grid of tile objects
             _tileGrid = new Tiles[_height, _width];
-            for (int row = 0; row < _height; row++)
+
+            //Generate row
+            for (int row = 0; row < _height; row++) //Wont increase row unless height matches
             {
-                //Generate row
-                for(int col = 0; col < _width; col++)
+                //Generate column
+                for (int column = 0; column < _width; column++) //Wont increase column unless row matches
                 {
-                    //Generate column
-                    _tileGrid[row, col] = new Tiles()
+                    //Adds the grid
+                    _tileGrid[row, column] = new Tiles()
                     {
                         IsItCleared = false,
                         IsItFlagged = false,
                         IsItAMine = false,
                         Row = row,
-                        Column = col
+                        Column = column
                     };
                 }
             }
@@ -87,12 +90,13 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
             //Place mines an empty grid
             for(int i = 0; i < _bombs; i++)
             {
+                //Places the bombs randomly within the parameters of row and column
                 int row = random.Next(0, _height);
-                int col = random.Next(_width);
+                int column = random.Next(_width);
 
-                if (_tileGrid[row, col].IsItAMine) --i; //Check if the field is already args mine
-                else _tileGrid[row, col].IsItAMine = true;
-                Debug.WriteLine(_tileGrid[row, col]);
+                if (_tileGrid[row, column].IsItAMine) --i; //Check if the field is already a mine
+                else _tileGrid[row, column].IsItAMine = true; //Adds a mine
+                Debug.WriteLine(_tileGrid[row, column]); //Just for fanciness
             }
             GenerateGrid();
         }
@@ -103,36 +107,40 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
             {
                 Orientation = Orientation.Vertical
             };
-            for(int row = 0; row < _tileGrid.GetLength(0); row++)
+            //generate row
+            for (int row = 0; row < _tileGrid.GetLength(0); row++)
             {
                 StackPanel RowStack = new StackPanel();
                 RowStack.Orientation = Orientation.Horizontal;
-                //generate row
-                for(int col = 0; col < _tileGrid.GetLength(1); col++)
-                {
-                    //generate column
+
+                //generate column
+                for (int column = 0; column < _tileGrid.GetLength(1); column++)
+                {   
+                    //Creating the tiles
                     Button gridBtn = new Button
                     {
                         Width = 20,
                         Height = 20,
                         Background = Brushes.White,
                         Style = (Style)Application.Current.TryFindResource("TileButton"),
-                        Name = "btn" + row + col
+                        Name = "btn" + row + column
                     };
 
                     var row1 = row;
-                    var col1 = col;
-                    gridBtn.Click += (s, args) => GridBtn_Click(s, args, row1, col1);
-                    gridBtn.MouseRightButtonDown += (s, args) => FlagTile(s, args, row1, col1);
-                    RowStack.Children.Add(gridBtn);
+                    var column1 = column;
+                    gridBtn.Click += (s, args) => GridBtn_Click(s, args, row1, column1); //Checks the tile when clicked
+                    gridBtn.MouseRightButtonDown += (s, args) => FlagTile(s, args, row1, column1); //Adds the flag
+                    RowStack.Children.Add(gridBtn); //Adds the interaction with tiles to the RowStack
                 }
-                mineField.Children.Add(RowStack);
+                mineField.Children.Add(RowStack); //Adds the RowStack to the mineField
             }
-            MinefieldGrid.Children.Add(mineField);
+            MinefieldGrid.Children.Add(mineField); //Adds the mineField to the entire MinefieldGrid
         }
+        #endregion
 
+        #region Interaction with Grid tiles
         /// <summary>
-        /// This method gets called when tile is left clicked, aka marking args tile as args flag
+        /// This method gets called when tile is left clicked, aka marking tile as flag
         /// </summary>
         private void GridBtn_Click(object sender, RoutedEventArgs args, int row, int col)
         {
@@ -165,7 +173,7 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
 
                     //Shows every button around the clicked
                     int mineCounter = 0;
-                    List<Tiles> surroundingTiles = GetNeighbouringCells(row, col);
+                    List<Tiles> surroundingTiles = GetNeighbouringTiles(row, col);
                     foreach(Tiles t in surroundingTiles)
                     {
                         //Check the list and count the mines around the button/tile clicked
@@ -176,7 +184,7 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
                     if (mineCounter != 0) ((Button)sender).Content = mineCounter.ToString();
                     else
                     {
-                        ClearSurroundingCells(row, col);
+                        ClearSurroundingTiles(row, col);
                     }
 
 
@@ -185,7 +193,9 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
             }
 
         }
+        #endregion
 
+        #region Check if you won or not
         //Check if all tiles have been cleared/did you win or not yet?
         private void CheckWin()
         {
@@ -193,7 +203,7 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
             for(int i = 0; i < _tileGrid.GetLength(0); i++)
             {
                 if (!IsCleared) break;
-                ///this one created out of bounds error sometimes, fix this
+                
                 for(int j = 0; j < _tileGrid.GetLength(1); j++)
                 {
                     if (!_tileGrid[i,j].IsItFlagged && !_tileGrid[i, j].IsItCleared)
@@ -213,19 +223,20 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
                     this.Close();
                 }
                 else new StartingWindow().Show();
-                this.Close();
+                this.Close(); //this.Close() makes sure that our former game doesnt stick around
             }
 
         }
+        #endregion
 
-        #region tiles
-        //Clear surrounding empty cells
-        private void ClearSurroundingCells(int row, int col)
+        #region Clear surrounding tiles
+        //Clear surrounding empty tiles
+        private void ClearSurroundingTiles(int row, int column)
         {
-            List<Tiles> surroundingCells = GetNeighbouringCells(row, col);
-            foreach(Tiles tiles in surroundingCells)
+            List<Tiles> surroundingTiless = GetNeighbouringTiles(row, column);
+            foreach(Tiles tiles in surroundingTiless)
             {
-                List<Tiles> tilesList = GetNeighbouringCells(tiles.Row, tiles.Column);
+                List<Tiles> tilesList = GetNeighbouringTiles(tiles.Row, tiles.Column);
                 int counter = 0;
                 foreach (Tiles tiles1 in tilesList)
                 {
@@ -234,22 +245,26 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
                         counter++;
                     }
                 }
-                if(counter == 0 && (tiles.Row != row || tiles.Column != col) && !tiles.IsItCleared)
+                //counter refers to the mine counter
+                if(counter == 0 && (tiles.Row != row || tiles.Column != column) && !tiles.IsItCleared)
                 {
                     tiles.IsItCleared = true;
-                    ClearSurroundingCells(tiles.Row, tiles.Column);
+                    ClearSurroundingTiles(tiles.Row, tiles.Column);
                 }
                 else
                 {
-                    //This is taken almost directly from stackoverflow, together with Descendant method
-                    //Study and explain what is happening
-                    
-                    //If this is disabled, it wont clear neighbouring cells
-                     
-                    ((Button)FindDescendant(MinefieldGrid, $"btn{tiles.Row}{tiles.Column}")).IsEnabled = false;
-                    ((Button)FindDescendant(MinefieldGrid, $"btn{tiles.Row}{tiles.Column}")).Background = Brushes.Green;
+                    //This Descendant setup is found on Stackoverflow, largely inspired
+                    //I had never encounted Descendant before, but it seemed like a very good thing to learn to use
+
+                    //If this is disabled, it wont clear neighbouring tiles
+                    //The $ is to seperate the tiles from the string
+                    //casting as Button
+                    //Descendant means it basically walks all over the MinefieldGrid until it finds a result
+                    //The results being the mines, the tiles around the mines will make numbers, but the rest is cleared
+                    ((Button)FindDescendant(MinefieldGrid, $"btn{tiles.Row}{tiles.Column}")).IsEnabled = false; //Its not cleared by default
+                    ((Button)FindDescendant(MinefieldGrid, $"btn{tiles.Row}{tiles.Column}")).Background = Brushes.Green; //My choice of colours
                     ((Button)FindDescendant(MinefieldGrid, $"btn{tiles.Row}{tiles.Column}")).Foreground = Brushes.White;
-                    _tileGrid[tiles.Row, tiles.Column].IsItCleared = true;
+                    _tileGrid[tiles.Row, tiles.Column].IsItCleared = true; //Clears the neighbouring tiles
                     if (counter > 0) ((Button)FindDescendant(MinefieldGrid, $"btn{tiles.Row}{tiles.Column}")).Content = counter;
 
                     
@@ -258,8 +273,8 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
 
         }
 
-        //Get list of neighbouring cells
-        private List<Tiles> GetNeighbouringCells(int row, int col)
+        //Get list of neighbouring cells, adds the 1,2,3 etc, depending on how many mines they touch
+        private List<Tiles> GetNeighbouringTiles(int row, int column)
         {
             List<Tiles> surroundingTiles = new List<Tiles>();
 
@@ -271,9 +286,9 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
                     for(int j = -1; j <= 1; j++)
                     {
                         //check if column exists, incase of corners or edges
-                        if(col + j > -1 && col+j < _tileGrid.GetLength(1) && (col+j != 0 || row+i != 0))
+                        if(column + j > -1 && column+j < _tileGrid.GetLength(1) && (column+j != 0 || row+i != 0))
                         {
-                            surroundingTiles.Add(_tileGrid[row + i, col + j]);
+                            surroundingTiles.Add(_tileGrid[row + i, column + j]);
                         }
                     }
                 }
@@ -282,7 +297,7 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
         }
         #endregion
 
-        #region flag
+        #region FlagTile
         //When right clicking tiles to get the flag to show
         private void FlagTile(object sender, RoutedEventArgs a, int row, int col)
         {
@@ -306,13 +321,13 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
         }
         #endregion
 
-
-
+        #region Property change
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged(string elementName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(elementName));
         }
+        #endregion
 
         #region getters and setters
         public int Bombs
@@ -327,10 +342,11 @@ namespace LarsMinesweep.View //Has to be .View, otherwise MinefieldGrid breaks
         }
         #endregion
 
-        #region descendants, maybe remove, since it is copied from google
-        //Find descendant control ny name
+        #region descendants
         
-         
+        
+        //The ? is condtional operator, evaluates a bool expression and return result
+        //Havent worked with FrameworkElement much, if at all, this is heavily inspired from Stackoverflow in working with Descendants
         private static DependencyObject? FindDescendant( DependencyObject parent, string name)
         {
             //See if this object has the target name

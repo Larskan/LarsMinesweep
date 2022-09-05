@@ -59,8 +59,5 @@ namespace LarsMinesweep.ViewModel
             //the $ seperates the strings from the setters/getters, without it, the entire thing would be a string
             return $"This tile is on Row: {Row}, Column: {Column}, Cleared: {IsItCleared}, IsItAMine: {IsItAMine}, IsItFlagged: {IsItFlagged}";
         }
-
-
     }
-
 }

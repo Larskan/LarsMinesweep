@@ -14,10 +14,11 @@
         <DockPanel VerticalAlignment="Center" Margin="5,0,5,0">
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                 <Image Width="18" VerticalAlignment="Center" Margin="0,0,5,0" Source="../Model/mine.png"/>
-                <TextBlock VerticalAlignment="Center" x:Name="textBombs" FontFamily="alarm clock" FontSize="25" FontWeight="Bold" Text="{Binding Bombs}" Foreground="Red"></TextBlock>
+                <TextBlock VerticalAlignment="Center" x:Name="textBombs" FontSize="25" FontWeight="Bold" Text="{Binding Bombs}" Foreground="Red"></TextBlock>
             </StackPanel>
             <StackPanel DockPanel.Dock="Right" HorizontalAlignment="Right">
-                <TextBlock x:Name="textTimer" FontFamily="alarm clock" FontSize="25" FontWeight="Bold" Text="{Binding Time}" Foreground="Red"></TextBlock>
+                <!-- The Binding Time is basically the counter on how long you are taking -->
+                <TextBlock x:Name="textTimer" FontSize="25" FontWeight="Bold" Text="{Binding Time}" Foreground="Red"></TextBlock>
             </StackPanel>
         </DockPanel>
         <Grid Grid.Row="1" x:Name="MinefieldGrid"/>
